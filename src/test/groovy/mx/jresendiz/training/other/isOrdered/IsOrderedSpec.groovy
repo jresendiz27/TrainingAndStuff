@@ -3,7 +3,7 @@ package mx.jresendiz.training.other.isOrdered
 import spock.lang.Specification
 
 class IsOrderedSpec extends Specification {
-    void "Should verify ransom note problem"() {
+    void "Should verify is ordered problem"() {
         expect:
         IsOrdered.solve(elements as int[]) == result
         where:
