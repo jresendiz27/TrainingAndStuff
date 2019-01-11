@@ -1,3 +1,6 @@
+package mx.jresendiz.training.patterns.creational
+
+
 import groovy.transform.ToString
 
 
@@ -176,7 +179,6 @@ class PizzaWithLotOfOptionsBuilder implements Pizza {
     }
 }
 
-
 //def pizzaBuilder = PizzaWithLotOfOptionsBuilder.create()
 //// spoiler alert ... -> Factory! wuuuuuut
 //println(pizzaBuilder
@@ -216,38 +218,148 @@ public enum TypeOfPizza {
 }
 
 class PizzaFactory {
-   public static Pizza create(TypeOfPizza type) {
-       switch (type) {
-           case TypeOfPizza.AZU:
-               PizzaWithLotOfOptionsBuilder.create().setName('Azu').build()
-               break;
-           case TypeOfPizza.RAFA:
-               PizzaWithLotOfOptionsBuilder.buildPizzaForRafa()
-               break;
-           case TypeOfPizza.TONO:
-               PizzaWithLotOfOptionsBuilder.create().setName('Tono').build()
-               break;
-           case TypeOfPizza.CALZONE:
-               PizzaWithLotOfOptionsBuilder.create().setSize(10).setName('Calzone').setWithCheese(false).build()
-               break;
+    public static Pizza create(TypeOfPizza type) {
+        switch (type) {
+            case TypeOfPizza.AZU:
+                PizzaWithLotOfOptionsBuilder.create().setName('Azu').build()
+                break;
+            case TypeOfPizza.RAFA:
+                PizzaWithLotOfOptionsBuilder.buildPizzaForRafa()
+                break;
+            case TypeOfPizza.TONO:
+                PizzaWithLotOfOptionsBuilder.create().setName('Tono').build()
+                break;
+            case TypeOfPizza.CALZONE:
+                PizzaWithLotOfOptionsBuilder.create().setSize(10).setName('Calzone').setWithCheese(false).build()
+                break;
 //           case TypeOfPizza.CUSTOM:
 //               PizzaWithLotOfOptionsBuilder.create()
 //               break;
 //           case TypeOfPizza.UNIQUE:
 //               // singleton
 //               break;
-           default:
-               PizzaWithLotOfOptionsBuilder.buildDefaultPizza()
-               break;
-       }
-   }
+            default:
+                PizzaWithLotOfOptionsBuilder.buildDefaultPizza()
+                break;
+        }
+    }
 }
 
 // mock(PizzaFactory).expect(:create).with(TypeOfPizza.AZU).returns((Pizza)ATestPizzaObject)
-
 
 //println(PizzaFactory.create(TypeOfPizza.AZU))
 //println(PizzaFactory.create(TypeOfPizza.RAFA))
 //println(PizzaFactory.create(TypeOfPizza.TONO))
 //println(PizzaFactory.create(TypeOfPizza.CRUDIVEGANAECOFRIENDLY))
 //println(PizzaFactory.create(TypeOfPizza.CUSTOM).setName('CUSTOM').build())
+
+/*
+* Prototype
+*
+* You only need the skeleton of the `prototype` of an object, and other objects might change a bit but keep the same
+* base.
+*  - Eg: Automóviles (platina, clio) misma base, algunas variantes
+*
+*  Pros:
+*   - La reutilización de un prototipo para crear nuevos objetos
+*   - Evita la herencia y lo hace por medio de composición
+*  Cons:
+*   - El proceso de clonación de un objeto podría resultar complicado
+*   - Puede ser reemplazado por otros patrones de creación
+*   - Podrían existir referencias circulares lo que complicaría el proceso de clonación
+*   - Requiere un  `Registry` para mantener el track de los prototipos y así poder reutilizarlos en caso de ser necesario
+*   - Requiere mayor mantenimiento debido a sus componentes
+* */
+
+// Java implementa la clonación de objetos por medio de la interfaz Cloneable
+//@ToString
+//interface ChassisPrototype extends Cloneable {
+//    int lengthInCentimeters = 10
+//    String material = 'Steel'
+//    int widthInCentimeters = 10
+//
+//    abstract ChassisPrototype copyMe();
+//}
+
+interface ChassisPrototype extends Cloneable {
+    int lengthInCentimeters = 10
+    String material = 'Steel'
+    int widthInCentimeters = 10
+
+    abstract ChassisPrototype copyMe();
+}
+
+class VWChassis implements ChassisPrototype {
+    int lengthInCentimeters = 6666
+    String material = 'SteelAlemanNazi'
+
+    @Override
+    ChassisPrototype copyMe() {
+        this.clone() as ChassisPrototype
+    }
+}
+
+
+class ChevyChassisPrototype implements ChassisPrototype {
+    int widthInCentimeters = 8
+    String material = 'SteelMexaChevy'
+
+    public ChevyChassisPrototype() {
+        println("[CHEVY] ... SESTACREANDO")
+        Thread.sleep(2000)
+    }
+
+    @Override
+    ChassisPrototype copyMe() {
+        println("[CHEVY] ... SESTANCLONANDO!!!")
+        this.clone() as ChassisPrototype
+    }
+}
+
+
+class BMWChassisPrototype implements ChassisPrototype {
+    int widthInCentimeters = 20
+    String material = 'SteelChinoBMW'
+
+    public BMWChassisPrototype() {
+        println("[BMW] ... SESTACREANDO")
+        Thread.sleep(2000)
+    }
+
+    @Override
+    ChassisPrototype copyMe() {
+        println("[BMW] ... SESTANCLONANDO!!!")
+        this.clone() as ChassisPrototype
+    }
+}
+
+enum ChassisTypes {
+    CHEVY, BMW, VW
+}
+
+
+class ChassisFactory {
+    static HashMap<ChassisTypes, ChassisPrototype> prototypeRegistry = new HashMap<>()
+    static {
+        prototypeRegistry.put(ChassisTypes.CHEVY, new ChevyChassisPrototype())
+        prototypeRegistry.put(ChassisTypes.BMW, new BMWChassisPrototype())
+        prototypeRegistry.put(ChassisTypes.VW, new VWChassis())
+    }
+
+    static ChassisPrototype createNewChassis(ChassisTypes type) {
+        if (!prototypeRegistry.get(type)) {
+            throw new RuntimeException('Chassis not defined in registry')
+        }
+        prototypeRegistry.get(type).copyMe()
+    }
+}
+
+(1..10).each {
+    println("Prototype: $it, Address: ${ChassisFactory.createNewChassis(ChassisTypes.CHEVY)}")
+}
+
+(1..10).each {
+    println("Prototype: $it, Address: ${ChassisFactory.createNewChassis(ChassisTypes.BMW)}")
+}
+
+println("Prototype: 0, Address: ${ChassisFactory.createNewChassis(ChassisTypes.VW)}")
